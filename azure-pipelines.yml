@@ -8,6 +8,7 @@ pool: 'yaml-pipeline'
 
 variables:
   servicename: 'new-todo-app-yaml-pipeline'
+  path: '$(System.DefaultWorkingDirectory)/todo_infra_env'
 
 steps:
 - task: TerraformInstaller@1
@@ -19,7 +20,7 @@ steps:
   inputs:
     provider: 'azurerm'
     command: 'init'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/envirnoment/dev'
+    workingDirectory: $(path)
     backendServiceArm: $(serviceName)
     backendAzureRmStorageAccountName: 'storagesliku24072025'
     backendAzureRmContainerName: 'tfstate'
@@ -30,14 +31,14 @@ steps:
   inputs:
     provider: 'azurerm'
     command: 'validate'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/envirnoment/dev'
+    workingDirectory: $(path)
 
 - task: TerraformTask@5
   displayName: terraform fmt
   inputs:
     provider: 'azurerm'
     command: 'custom'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/envirnoment/dev'
+    workingDirectory: $(path)
     outputTo: 'console'
     customCommand: 'fmt'
     environmentServiceNameAzureRM: $(serviceName)
@@ -47,13 +48,14 @@ steps:
   inputs:
     provider: 'azurerm'
     command: 'plan'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/envirnoment/dev'
+    workingDirectory: $(path)
     environmentServiceNameAzureRM: $(serviceName)
 
 - task: TerraformTask@5
   displayName: terraform apply
+  condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
   inputs:
     provider: 'azurerm'
     command: 'apply'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/envirnoment/dev'
-    environmentServiceNameAzureRM: 'new-todo-app-yaml-pipeline'
+    workingDirectory: $(path)
+    environmentServiceNameAzureRM: $(serviceName)
